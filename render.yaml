@@ -1,0 +1,88 @@
+"""
+Budget Optimizer - Allocates and optimizes travel budget across categories
+"""
+
+
+DEFAULT_ALLOCATION = {
+    "accommodation": 0.35,
+    "food": 0.25,
+    "transport": 0.15,
+    "activities": 0.15,
+    "shopping": 0.05,
+    "emergency": 0.05,
+}
+
+
+class BudgetOptimizer:
+    def allocate_budget(self, total_budget: float, trip_duration: int) -> dict:
+        daily = round(total_budget / max(trip_duration, 1), 2)
+        allocation = {}
+        for category, pct in DEFAULT_ALLOCATION.items():
+            allocation[category] = {
+                "total": round(total_budget * pct, 2),
+                "daily": round(daily * pct, 2),
+                "percentage": int(pct * 100),
+            }
+
+        return {
+            "total_budget": total_budget,
+            "trip_duration_days": trip_duration,
+            "daily_budget": daily,
+            "allocation": allocation,
+            "tips": self._budget_tips(daily),
+        }
+
+    def optimize_itinerary_cost(self, itinerary: list, total_budget: float) -> dict:
+        if not itinerary:
+            return {"error": "Empty itinerary provided"}
+
+        estimated_costs = []
+        for day in itinerary:
+            cost = day.get("estimated_cost", 0)
+            estimated_costs.append(cost)
+
+        total_estimated = sum(estimated_costs)
+        over_budget = total_estimated > total_budget
+        variance = round(total_estimated - total_budget, 2)
+
+        suggestions = []
+        if over_budget:
+            suggestions.append("Consider staying in hostels or Airbnb instead of hotels")
+            suggestions.append("Cook some meals instead of dining out every meal")
+            suggestions.append("Use public transport instead of taxis")
+            suggestions.append("Look for free attractions and walking tours")
+        else:
+            suggestions.append("You have budget flexibility — consider upgrading accommodation for 1-2 nights")
+            suggestions.append("Add a special dining experience or premium activity")
+
+        return {
+            "total_budget": total_budget,
+            "estimated_cost": round(total_estimated, 2),
+            "variance": variance,
+            "status": "over_budget" if over_budget else "within_budget",
+            "savings_possible": round(abs(variance) * 0.3, 2) if over_budget else 0,
+            "suggestions": suggestions,
+        }
+
+    def _budget_tips(self, daily_budget: float) -> list:
+        if daily_budget < 50:
+            return [
+                "Stay in hostels or guesthouses",
+                "Use local street food and markets",
+                "Take buses and shared transport",
+                "Look for free attractions",
+            ]
+        elif daily_budget < 150:
+            return [
+                "Mix budget and mid-range accommodation",
+                "Balance eating out with self-catering",
+                "Use a mix of public transport and occasional taxis",
+                "Prioritise 2-3 paid experiences per destination",
+            ]
+        else:
+            return [
+                "Comfortable hotel or boutique accommodation is within reach",
+                "Enjoy local restaurants without strict limits",
+                "Private transport adds convenience",
+                "Include premium experiences and tours",
+            ]
